@@ -1,48 +1,51 @@
-import React, { useReducer } from 'react';
-import reducer from './../reducers/index';
-import { addToDo, setAddToDo } from './../actions';
+import React, { useReducer, useState } from 'react';
+import Todos from './ToDos';
 
-
-const ToDoList = () => {
-  const initialState = {
-    item: [' Test '],
-    completed: false,
-    id: Math.round(Math.random() * 435636),
-    newToDo: ''
-  }
-
-  const [ state, dispatch ] = useReducer(reducer, initialState);
-
-  const handleChange = e => {
-      dispatch(setAddToDo(e.target.value));
-  }
-  const handleSubmit = e => {
-      e.preventDefault();
-  }
-
-  return (
-  <div>
-    <form onSubmit={handleSubmit}>
-      <input
-      className='add-todo'
-      type='text'
-      name='newToDo'
-      value={state.newToDo}
-      onChange={handleChange}
-      />
-      <button
-      onClick={() => {
-          dispatch(addToDo(state.newToDo))
-      }}>Add</button>
-    </form>
-    <h4>
-        {state.item}
-    </h4>
-    <p>
-        id: {state.id}
-    </p>
-  </div>
-  )
+export const ACTIONS = {
+    ADD_TODO: 'add-todo',
+    TOGGLE_TODO: 'toggle-todo'
 }
 
-export default ToDoList;
+function reducer(todos, action) {
+    switch (action.type) {
+        case ACTIONS.ADD_TODO :
+            return [...todos, newTodo(action.payload.name)]
+        case ACTIONS.TOGGLE_TODO:
+            return todos.map(todo => {
+                if (todo.id === action.payload.id) {
+                    return { ...todo, complete: !todo.complete }
+                }
+                return todo
+            })
+        default:
+            return todos;
+    }
+}
+
+function newTodo(name) {
+    return { id: Date.now(), name: name, complete: false }
+}
+
+export default function ToDo() {
+    const [ todos, dispatch ] = useReducer(reducer, [])
+    const [ name, setName ] = useState('');
+
+    function handleSubmit(e) {
+        e.preventDefault();
+        dispatch({type: ACTIONS.ADD_TODO, payload: { name: name }})
+        setName('')
+    }
+
+    console.log(todos);
+
+    return (
+        <>
+        <form onSubmit={handleSubmit}>
+            <input type='text' value={name} onChange={e => setName(e.target.value)} />
+        </form>
+        {todos.map(todo => {
+           return <Todos key={todo.id} todo={todo} dispatch={dispatch} />
+        })}
+        </>
+    )
+}
